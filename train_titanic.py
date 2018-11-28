@@ -40,7 +40,7 @@ to_ignore=[1, 6]
 
 
 train1_path = 'titanic_transformed_data.csv'
-ITERATOR_BATCH_SIZE = 5
+ITERATOR_BATCH_SIZE = 250
 NR_EPOCHS = 3
 
 dataset = tf.contrib.data.CsvDataset(train1_path,
