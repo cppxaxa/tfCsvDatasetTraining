@@ -16,9 +16,12 @@ def breakBatch(data_and_target):
     data = []
     labels = []
     for i in range(len(data_and_target)):
-        data.append(data_and_target[i][1:])
+        d = []
+        for unit in data_and_target[i][1:]:
+            d.append(unit)
+        data.append(d)
         labels.append([1.0 - data_and_target[i][0], data_and_target[i][0]])
-    return data, labels
+    return np.array(data, dtype=np.float32), np.array(labels, dtype=np.float32) 
 
 # Preprocessing function
 def preprocess(data, columns_to_ignore):
@@ -37,12 +40,12 @@ to_ignore=[1, 6]
 
 
 train1_path = 'titanic_transformed_data.csv'
-ITERATOR_BATCH_SIZE = 80
+ITERATOR_BATCH_SIZE = 5
 NR_EPOCHS = 3
 
 dataset = tf.contrib.data.CsvDataset(train1_path,
                                      [tf.float32, tf.float32, tf.float32, tf.float32, tf.float32, tf.float32, tf.float32],
-                                     header=True)
+                                     header=False)
 
 
 # data = preprocess([data], to_ignore)
@@ -136,6 +139,7 @@ if len(sys.argv) > 1:
     tflearn.is_training(True, session=sess)
 
     print(data)
+    print(labels)
 
     # for i in range(10):
     #     sess.run(train_op, feed_dict={x: data, y: labels})
@@ -148,6 +152,22 @@ if len(sys.argv) > 1:
         print('\nepoch: ', i)
 
         if i != 0 and i % 10 == 0:
+            # Let's create some data for DiCaprio and Winslet
+            dicaprio = [3, 'Jack Dawson', 'male', 19, 0, 0, 'N/A', 5.0000]
+            winslet = [1, 'Rose DeWitt Bukater', 'female', 17, 1, 2, 'N/A', 100.0000]
+            # Preprocess data
+            dicaprio, winslet = preprocess([dicaprio, winslet], to_ignore)
+
+            print('\n\n\n')
+
+            pred = sess.run(net, feed_dict={x: [dicaprio, winslet]})
+            # print(pred)
+
+            # Predict surviving chances (class 1 results)
+            # pred = model.predict([dicaprio, winslet])
+            print("DiCaprio Surviving Rate:", '{:.5f}'.format(pred[0][1]))
+            print("Winslet Surviving Rate:", '{:.5f}'.format(pred[1][1]))
+
             saver.save(sess, os.path.join(os.getcwd(), weightsFile))
 
         iterator = dataset.make_one_shot_iterator()
@@ -157,6 +177,10 @@ if len(sys.argv) > 1:
             try:
                 data_and_target = sess.run(next_element)
                 data, labels = breakBatch(data_and_target)
+                
+                # print(data)
+                # print(labels)
+                # exit()
 
                 sess.run(train_op, feed_dict={x: data, y: labels})
                 cost = sess.run(loss, feed_dict={x: data, y: labels})
